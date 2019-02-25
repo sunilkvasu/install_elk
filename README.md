@@ -12,6 +12,6 @@ This playbook will do the following:
 
 --> Front end web server secured using htpasswd
 
---> Install and configure Curator
+--> Install and configure Curator for log cleanups
 
 Default kibana credentials: user:kibana password:kibana
