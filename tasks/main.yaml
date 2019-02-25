@@ -1,0 +1,141 @@
+- name: install jdk rpm
+  yum:
+    name: "packages/{{ jdk_package }}"
+    disablerepo: "*"
+    state: present
+- name: install elasticsearch rpm
+  yum:
+    name: "https://artifacts.elastic.co/downloads/elasticsearch/{{ elasticsearch_package }}"
+    disablerepo: "*"
+    state: present
+- name: install kibana rpm
+  yum:
+    name: "https://artifacts.elastic.co/downloads/kibana/{{ kibana_package }}"
+    disablerepo: "*"
+    state: present
+- name: install logstash rpm
+  yum:
+    name: "https://artifacts.elastic.co/downloads/logstash/{{ logstash_package }}"
+    disablerepo: "*"
+    state: present
+- name: install curator rpm
+  yum:
+    name: "packages/{{ curator_package }}"
+    state: present
+- name: install web server
+  yum:
+    name: httpd
+    #disablerepo: "*"
+    #enablerepo: "centos-7-server-rpms,rhel-7-server-rpms_pmi,rhel-7-server-rpms-patching,rhel-7-server-rpms"
+    state: present
+- name: Start web server
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+- name: Create folder /var/elk_data
+  file:
+    name: /var/elk_data
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+- name: Create folder /var/elk_logs
+  file:
+    name: /var/elk_logs
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+- name: Create folder /var/elk_data/backup
+  file:
+    name: /var/elk_data/backup
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+- name: Create folder /var/logstash
+  file:
+    name: /var/logstash
+    state: directory
+    owner: logstash
+    group: logstash
+- name: Copy j2 templates for elasticsearch
+  template:
+    src: templates/elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+  notify: restart elasticsearch
+- name: Copy j2 templates for kibana
+  template:
+    src: templates/kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+  notify: restart kibana
+- name: Copy j2 templates for logstash STEP1
+  template:
+    src: templates/01-input_syslog.conf.j2
+    dest: /etc/logstash/conf.d/01-input_syslog.conf.disabled
+  notify: restart logstash
+- name: Copy j2 templates for logstash STEP2
+  template:
+    src: templates/21-output_elastic.conf
+    dest: /etc/logstash/conf.d/21-output_elastic.conf.disabled
+  notify: restart logstash
+- name: Copy j2 templates for logstash beats STEP1
+  template:
+    src: templates/01-beats.conf.j2
+    dest: /etc/logstash/conf.d/01-beats.conf
+  notify: restart logstash
+- name: Start logstash
+  service:
+    name: logstash
+    state: started
+    enabled: yes
+- name: Start elasticsearch
+  service:
+    name: elasticsearch
+    state: started
+    enabled: yes
+- name: Start kibana
+  service:
+    name: kibana
+    state: started
+    enabled: yes
+- name: Configure web server STEP1
+  template:
+    src: templates/httpd.conf.j2
+    dest: /etc/httpd/conf/httpd.conf
+  notify: restart web server
+- name: Configure web server STEP2
+  template:
+    src: templates/.htpasswd
+    dest: /etc/httpd/conf.d/.htpasswd
+  notify: restart web server
+- name: Configure firewall
+  template:
+    src: templates/public.xml.j2
+    dest: /etc/firewalld/zones/public.xml
+  notify: restart firewalld
+- name: Start firewall
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+- name: Configure curator STEP1
+  file:
+    path: /var/elk_data/scripts/curator
+    state: directory
+- name: Configure curator STEP2
+  file:
+    path: /root/.curator
+    state: directory
+- name: Configure curator STEP3
+  template:
+    src: templates/delete_logstash_30_index.yml
+    dest: /var/elk_data/scripts/curator/delete_logstash_30_index.yml
+- name: Configure curator STEP4
+  template:
+    src: templates/delete_metricbeat_7_index.yml
+    dest: /var/elk_data/scripts/curator/delete_metricbeat_7_index.yml
+- name: Configure curator STEP5
+  template:
+    src: templates/curator.yml.j2
+    dest: /root/.curator/curator.yml
+- debug:
+    msg: ELK STACK INSTALLATION COMPLETED SUCCESSFULLY..!! YOUR KIBANA URL IS http://{{ server_host }}

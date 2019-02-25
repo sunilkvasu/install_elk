@@ -1,0 +1,10 @@
+input {
+##########################
+### listening for logs ###
+##########################
+    syslog {
+        port => {{ syslog_port }}
+        type => rsyslog
+    }
+}
+

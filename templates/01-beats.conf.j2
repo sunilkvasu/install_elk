@@ -1,0 +1,143 @@
+# filename: /etc/logstash/conf.d/beats.conf
+# from https://www.elastic.co/guide/en/beats/libbeat/1.1/logstash-installation.html
+input {
+  beats {
+    port => {{ syslog_port }}
+  }
+}
+
+filter {
+  if [message] =~ "^#" {
+    drop {}
+  }
+  if [log_type] == "iis" {
+    grok {
+      match => { "message" => "%{TIMESTAMP_ISO8601:log_timestamp} %{WORD:S-SiteName} %{NOTSPACE:S-ComputerName} %{IPORHOST:S-IP} %{WORD:CS-Method} %{URIPATH:CS-URI-Stem} (?:-|\"%{URIPATH:CS-URI-Query}\") %{NUMBER:S-Port} %{NOTSPACE:CS-Username} %{IPORHOST:C-IP} %{NOTSPACE:CS-Version} %{NOTSPACE:CS-UserAgent} %{NOTSPACE:CS-Cookie} %{NOTSPACE:CS-Referer} %{NOTSPACE:CS-Host} %{NUMBER:SC-Status} %{NUMBER:SC-SubStatus} %{NUMBER:SC-Win32-Status} %{NUMBER:SC-Bytes} %{NUMBER:CS-Bytes} %{NUMBER:Time-Taken}"}
+    }
+  }
+  if [log_type] == "iis_qas" {
+    grok {
+      match => { "message" => "%{TIMESTAMP_ISO8601:log_timestamp} %{WORD:S-SiteName} %{NOTSPACE:S-ComputerName} %{IPORHOST:S-IP} %{WORD:CS-Method} %{URIPATH:CS-URI-Stem} (?:-|\"%{URIPATH:CS-URI-Query}\") %{NUMBER:S-Port} %{NOTSPACE:CS-Username} %{IPORHOST:C-IP} %{NOTSPACE:CS-Version} %{NOTSPACE:CS-UserAgent} %{NOTSPACE:CS-Cookie} %{NOTSPACE:CS-Referer} %{NOTSPACE:CS-Host} %{NUMBER:SC-Status} %{NUMBER:SC-SubStatus} %{NUMBER:SC-Win32-Status} %{NUMBER:SC-Bytes} %{NUMBER:CS-Bytes} %{NUMBER:Time-Taken}"}
+    }
+  }
+  if [log_type] == "shp" {
+    grok {
+      match => [ message , "%{DATESTAMP:Time}\ 	+%{PROG:Process}\ \(%{BASE16NUM:ProcessID}\)\ +	+%{BASE16NUM:Thread}	%{DATA:Product}	%{DATA:Category}\ +	+%{WORD:EnventID}	%{WORD:Level}[ 	]+%{DATA:Message}[	]+%{GREEDYDATA:Correlation}" ]
+#      match => [ message , "%{DATESTAMP:Time}\ +%{PROG:Process}\ \(%{BASE16NUM:ProcessID}\)\ +%{BASE16NUM:Thread}\ +%{DATA:Product}\ +%{DATA:Category}\ +%{WORD:EnventID}\ +%{WORD:Level}\ +%{DATA:Message}\ +%{GREEDYDATA:Correlation}" ]
+    }
+    if "Execution Time" in [Message] {
+       mutate {
+         add_field => { "CPmessage1" => "%{Message}"  }
+       }
+       mutate { 
+         split => ["Message" ,"="]
+       }
+       mutate { 
+         add_field => { "ExecTime2" => "%{Message[1]}"  }
+       }
+       mutate { 
+         convert => { "ExecTime2" => "float"  }
+       }
+    }
+    if "Error" in [Message] {
+       mutate { 
+         add_field => { "isError" => "1" }
+       }
+    }
+    if "(Timer Job" in [CPmessage1] {
+       mutate { 
+         split => ["CPmessage1" ," "]
+       }
+       mutate {
+         add_field => { "CPmessage2" => "%{CPmessage1[5]}" }
+       }
+       mutate { 
+         split => ["CPmessage2" ,")"]
+       }
+       mutate { 
+         add_field => { "TimerJobName" => "%{CPmessage2[0]}" }
+       }
+    }
+  }
+  if [log_type] == "shp_qas" {
+    grok {
+      match => [ message , "%{DATESTAMP:Time}\ 	+%{PROG:Process}\ \(%{BASE16NUM:ProcessID}\)\ +	+%{BASE16NUM:Thread}	%{DATA:Product}	%{DATA:Category}\ +	+%{WORD:EnventID}	%{WORD:Level}[ 	]+%{DATA:Message}[	]+%{GREEDYDATA:Correlation}" ]
+#      match => [ message , "%{DATESTAMP:Time}\ +%{PROG:Process}\ \(%{BASE16NUM:ProcessID}\)\ +%{BASE16NUM:Thread}\ +%{DATA:Product}\ +%{DATA:Category}\ +%{WORD:EnventID}\ +%{WORD:Level}\ +%{DATA:Message}\ +%{GREEDYDATA:Correlation}" ]
+    }
+    if "Execution Time" in [Message] {
+       mutate {
+         add_field => { "CPmessage1" => "%{Message}"  }
+       }
+       mutate { 
+         split => ["Message" ,"="]
+       }
+       mutate { 
+         add_field => { "ExecTime2" => "%{Message[1]}"  }
+       }
+       mutate { 
+         convert => { "ExecTime2" => "float"  }
+       }
+    }
+    if "Error" in [Message] {
+       mutate { 
+         add_field => { "isError" => "1" }
+       }
+    }
+    if "(Timer Job" in [CPmessage1] {
+       mutate { 
+         split => ["CPmessage1" ," "]
+       }
+       mutate {
+         add_field => { "CPmessage2" => "%{CPmessage1[5]}" }
+       }
+       mutate { 
+         split => ["CPmessage2" ,")"]
+       }
+       mutate { 
+         add_field => { "TimerJobName" => "%{CPmessage2[0]}" }
+       }
+    }
+  }
+  mutate
+  {
+     remove_field => [ "message" ]
+     remove_field => [ "CPmessage1" ]
+     remove_field => [ "CPmessage2" ]
+  }
+}
+
+output {
+  if [log_type] == "iis" {
+    elasticsearch {
+      hosts => "{{ server_host }}:9200"
+      manage_template => false
+      index => "fb-iislogs-%{+YYYY.MM.dd}"
+      document_type => "iis"
+    }
+  }
+  if [log_type] == "iis_qas" {
+    elasticsearch {
+      hosts => "{{ server_host }}:9200"
+      manage_template => false
+      index => "fb-iislogs-%{+YYYY.MM.dd}"
+      document_type => "iis"
+    }
+  }
+  if [log_type] == "shp" {
+      elasticsearch {
+        hosts => "{{ server_host }}:9200"
+        manage_template => false
+        index => "fb-shplogs-%{+YYYY.MM.dd}"
+        document_type => "shp"
+      }
+  }
+  if [log_type] == "shp_qas" {
+      elasticsearch {
+        hosts => "{{ server_host }}:9200"
+        manage_template => false
+        index => "fb-shplogs-%{+YYYY.MM.dd}"
+        document_type => "shp"
+      }
+  }
+  stdout { codec => rubydebug }
+}
