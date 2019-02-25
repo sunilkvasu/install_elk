@@ -1,6 +1,6 @@
 - name: install jdk rpm
   yum:
-    name: "packages/{{ jdk_package }}"
+    name: "{{ jdk_package }}"
     disablerepo: "*"
     state: present
 - name: install elasticsearch rpm
@@ -18,9 +18,13 @@
     name: "https://artifacts.elastic.co/downloads/logstash/{{ logstash_package }}"
     disablerepo: "*"
     state: present
+- name: copy curator rpm
+  copy:
+    src: "packages/{{ curator_package }}"
+    dest: "/tmp/"
 - name: install curator rpm
   yum:
-    name: "packages/{{ curator_package }}"
+    name: "/tmp/{{ curator_package }}"
     state: present
 - name: install web server
   yum:

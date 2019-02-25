@@ -11,7 +11,7 @@ network_host={{ inventory_hostname }}
 syslog_port=10514
 
 # Packages
-jdk_package=jdk-8u201-linux-x64.rpm
+jdk_package=java-1.8.0-openjdk.x86_64
 elasticsearch_package=elasticsearch-6.3.2.rpm
 kibana_package=kibana-6.3.2-x86_64.rpm
 logstash_package=logstash-6.3.2.rpm
