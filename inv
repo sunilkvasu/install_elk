@@ -1,0 +1,17 @@
+[elk_servers]
+elkserver01
+
+[elk_servers:vars]
+server_host={{ inventory_hostname }}
+elasticsearch_url=http://{{ inventory_hostname }}:9200
+path_data=/var/elk_data
+path_logs=/var/elk_logs
+path_repo=/var/elk_data/backup
+network_host={{ inventory_hostname }}
+syslog_port=10514
+# Packages
+jdk_package=jdk-8u171-linux-x64.rpm
+elasticsearch_package=elasticsearch-6.3.2.rpm
+kibana_package=kibana-6.3.2-x86_64.rpm
+logstash_package=logstash-6.3.2.rpm
+curator_package=elasticsearch-curator-5.5.1-1.x86_64.rpm

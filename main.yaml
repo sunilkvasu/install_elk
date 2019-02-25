@@ -1,0 +1,9 @@
+---
+- name: Install and configure ELK
+  hosts: elk_servers
+  vars:
+  tasks:
+    - import_tasks: tasks/main.yaml
+      when: ansible_distribution_major_version == "7"
+  handlers:
+    - import_tasks: handlers/main.yaml
