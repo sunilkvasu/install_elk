@@ -9,9 +9,8 @@ Please dont forget to Subscribe my YouTube channel...!!!
 https://www.youtube.com/channel/UCbbDemaGCFF8QQCps6pGiQg
 
 
-
-
-Title: Install and configure ELK on RHEL/CentOS 7
+Install and configure ELK on RHEL/CentOS 7
+=
 This playbook will do the following:
 --> Install and configure ELK stack based on the inventory
 
