@@ -1,5 +1,5 @@
 [elk_servers]
-elkserver01
+devops1
 
 [elk_servers:vars]
 server_host={{ inventory_hostname }}
