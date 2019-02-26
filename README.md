@@ -1,5 +1,5 @@
 
-Please dont forget to Subscribe my YouTube channel...!!!
+Please Subscribe my YouTube channel...!!!
 =
 Subscribe: https://www.youtube.com/channel/UCbbDemaGCFF8QQCps6pGiQg
 
